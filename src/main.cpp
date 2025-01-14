@@ -466,13 +466,21 @@ void draw_spect_display(ArduiPi_OLED &display, const display_info &disp_info)
 
   vector<double> scroll_origin(disp_info.scroll.begin() + 2,
                                disp_info.scroll.begin() + 4);
+#ifdef USE_EURK_ON_LINUX
+  draw_bitmap_scroll(0, 4 * H + 1, disp_info.status.get_origin(), 0); // origin
+#else
   draw_text_scroll(display, 0, 4 * H + 4, 20, disp_info.status.get_origin(),
                    scroll_origin, disp_info.text_change.secs());
+#endif
 
   vector<double> scroll_title(disp_info.scroll.begin(),
                               disp_info.scroll.begin() + 2);
+#ifdef USE_EURK_ON_LINUX
+  draw_bitmap_scroll(0, 6 * H - 2, disp_info.status.get_title(), 1); // title
+#else
   draw_text_scroll(display, 0, 6 * H, 20, disp_info.status.get_title(),
                    scroll_title, disp_info.text_change.secs());
+#endif
 
   draw_solid_slider(display, 0, 7 * H + 6, 128, 2,
                     100 * disp_info.status.get_progress());

@@ -53,6 +53,7 @@ namespace {
 const iconvpp::converter conv("ASCII//TRANSLIT", "UTF-8", true);
 }
 
+#ifndef USE_EURK_ON_LINUX
 static string to_ascii(string str)
 {
   string ascii;
@@ -63,6 +64,7 @@ static string to_ascii(string str)
   }
   return ascii;
 }
+#endif
 
 // https://stackoverflow.com/questions/1570511/c-code-to-get-the-ip-address
 string get_ip_address(const char *if_str)
@@ -205,10 +207,18 @@ void mpd_info::set_vals_volumio(struct mpd_connection *conn)
     song_total_secs = duration;
 
     title = (obj["title"].type() == Hjson::Value::Type::STRING)
+#ifdef USE_EURK_ON_LINUX
+                ? obj["title"]
+#else
                 ? to_ascii(obj["title"])
+#endif
                 : string();
     origin = (obj["artist"].type() == Hjson::Value::Type::STRING)
+#ifdef USE_EURK_ON_LINUX
+                 ? obj["artist"]
+#else
                  ? to_ascii(obj["artist"])
+#endif
                  : string();
   }
   else {
@@ -228,7 +238,11 @@ static string get_tag(const struct mpd_song *song, enum mpd_tag_type type)
       tag_vals += "; ";
     tag_vals += value;
   }
+#ifdef USE_EURK_ON_LINUX
+  return tag_vals;
+#else
   return to_ascii(tag_vals);
+#endif
 }
 
 mpd_info::mpd_info() { init_vals(); }
@@ -291,7 +305,11 @@ void mpd_info::set_vals_mpd(struct mpd_connection *conn)
 
   struct mpd_song *song;
   if ((song = mpd_recv_song(conn)) != NULL) {
+#ifdef USE_EURK_ON_LINUX
+    title = get_tag(song, MPD_TAG_TITLE);
+#else
     title = to_ascii(get_tag(song, MPD_TAG_TITLE));
+#endif
 
     // Where does the song come from, just one choice
     enum mpd_tag_type origin_tags[] = {MPD_TAG_ARTIST,       MPD_TAG_NAME,
@@ -299,7 +317,11 @@ void mpd_info::set_vals_mpd(struct mpd_connection *conn)
                                        MPD_TAG_PERFORMER,    MPD_TAG_UNKNOWN};
     int i = 0;
     while (origin_tags[i] != MPD_TAG_UNKNOWN) {
+#ifdef USE_EURK_ON_LINUX
+      origin = get_tag(song, origin_tags[i]);
+#else
       origin = to_ascii(get_tag(song, origin_tags[i]));
+#endif
       if (origin.size())
         break;
       i++;
@@ -402,10 +424,19 @@ int mpd_info::init()
         }
         else {
           if (strcmp("Radio station", artist_name) == 0)
+#ifdef USE_EURK_ON_LINUX
+            origin = album_name;
+#else
             origin = to_ascii(album_name);
+#endif
           else
+#ifdef USE_EURK_ON_LINUX
+            origin = artist_name;
+          title = title_name;
+#else
             origin = to_ascii(artist_name);
           title = to_ascii(title_name);
+#endif
         }
       }
     }

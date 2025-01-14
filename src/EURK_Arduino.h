@@ -18,10 +18,44 @@
 #define __EURK_ARDUINO_H
 
 #include <Adafruit_GFX.h>
+
+#ifdef USE_EURK_ON_LINUX
+#include "ArduiPi_OLED.h"
+#else
 #include <Adafruit_SSD1306.h>
+#endif
+
 #include "sfif_inc.h"
 #include "Hangeul_Font.h"
 #include "ASCII_Font.h"
+
+#ifdef USE_EURK_ON_LINUX
+
+// macros from Adafruit_GFX.cpp
+// Many (but maybe not all) non-AVR board installs define macros
+// for compatibility with existing PROGMEM-reading AVR code.
+// Do our own checks and defines here for good measure...
+
+#ifndef pgm_read_byte
+#define pgm_read_byte(addr) (*(const unsigned char *)(addr))
+#endif
+#ifndef pgm_read_word
+#define pgm_read_word(addr) (*(const unsigned short *)(addr))
+#endif
+#ifndef pgm_read_dword
+#define pgm_read_dword(addr) (*(const unsigned long *)(addr))
+#endif
+
+// Pointers are a peculiar case...typically 16-bit on AVR boards,
+// 32 bits elsewhere.  Try to accommodate both...
+
+#if !defined(__INT_MAX__) || (__INT_MAX__ > 0xFFFF)
+#define pgm_read_pointer(addr) ((void *)pgm_read_dword(addr))
+#else
+#define pgm_read_pointer(addr) ((void *)pgm_read_word(addr))
+#endif
+
+#endif
 
 /* 2바이트 조합형 한글을 위한 공용체 */
 #ifndef __HAN_UNION
@@ -60,7 +94,12 @@ union HAN_UNION {
 
 void EURK_hancode(int kind) ;
 void EURK_setxy(int x, int y) ;
+#ifdef USE_EURK_ON_LINUX
+void EURK_puts(char *s, int tag_type) ;
+void EURK_putsxy(int x, int y, char *s, int tag_type) ;
+#else
 void EURK_puts(char *s) ;
-void EURK_putsxy(int XPOS, int YPOS, char *s) ;
+void EURK_putsxy(int x, int y, char *s) ;
+#endif
 
 #endif

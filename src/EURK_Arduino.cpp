@@ -16,7 +16,14 @@
 
 #include <EURK_Arduino.h>
 
+#ifdef USE_EURK_ON_LINUX
+extern ArduiPi_OLED display ;
+
+#define pgm_read_word_near pgm_read_word
+#define SSD1306_LCDWIDTH 0x80 // 128
+#else
 extern Adafruit_SSD1306 display ;
+#endif
 
 static int __han_code__ = HANCODE_UTF_8 ;
 static int __x_pos__ = 0, __y_pos__ = 0 ;
@@ -24,7 +31,17 @@ static byte FontImage[32] = {0, } ;
 static const byte *HanFontSet = H_in_font_Hangel_844 ;
 static const byte *ASCIIFontSet = H_in_font_ASCII ;
 
+#ifdef USE_EURK_ON_LINUX
+static int remaining_length[2];
+static int x_pos_offset[2];
+static int directions[2];
+#endif
+
+#ifdef USE_EURK_ON_LINUX
+static const word comPhaNtablE[ALL_OF_HAN] = {
+#else
 static const word PROGMEM comPhaNtablE[ALL_OF_HAN] = {
+#endif
   /* 확장 완성형 한글 코드 배열 */
   0x0B0A1, 0x0B0A2, 0x08141, 0x08142, 0x0B0A3, 0x08143, 0x08144, 0x0B0A4,
   0x0B0A5, 0x0B0A6, 0x0B0A7, 0x08145, 0x08146, 0x08147, 0x08148, 0x08149,
@@ -1425,7 +1442,11 @@ static const word PROGMEM comPhaNtablE[ALL_OF_HAN] = {
   0x0C64F, 0x0C650, 0x0C651, 0x0C652
 } ;
 
+#ifdef USE_EURK_ON_LINUX
+static const word comPhaNindeXtablE[ALL_OF_HAN] = {
+#else
 static const word PROGMEM comPhaNindeXtablE[ALL_OF_HAN] = {
+#endif
 /* 확장 완성형 한글 코드를 위한 인덱스 배열 */
       2,     3,     5,     6,    11,    12,    13,    14,
      15,    24,    30,    31,    33,    34,    35,    37,
@@ -2833,7 +2854,7 @@ static word geTcomPhaNindeX(word code)
   srCbyteS = 2 ;
   for (word i = 0; i < ALL_OF_HAN; i++) if (comPhaNtablE[i] == code) return i ;
 */
-  word i, n, min, temp, temp2 ;
+  word i, n, min, temp ; //, temp2 ;
   const word *pI, *pH ;
 
   pI = comPhaNindeXtablE ;
@@ -2864,6 +2885,10 @@ static void MakeHanFont(uint16_t utf16)
   byte i ;
   byte *pB, *pF ;
 
+#ifdef USE_EURK_ON_LINUX
+  lastType = 0;
+#endif
+
   //Serial.println(utf16, HEX) ;
   last = utf16 % 28 ;
   utf16 /= 28 ;
@@ -2880,8 +2905,10 @@ static void MakeHanFont(uint16_t utf16)
     else midType = 3 ;
     lastType = jong[mid] ;
   }
+#ifndef USE_EURK_ON_LINUX
   firstType ;
   midType ;
+#endif
   memset(FontImage, 0, 32) ;
 
   pB = FontImage ;
@@ -2920,10 +2947,21 @@ static void MakeASCIIFont(int c)
   for (i = 0; i < 16; i++) *pB++ = pgm_read_byte(pF++) ;
 }
 
+#ifdef USE_EURK_ON_LINUX
+static void PutFontImage(int width, int tag_type)
+#else
 static void PutFontImage(int width)
+#endif
 {
+#ifdef USE_EURK_ON_LINUX
+  display.drawBitmap(__x_pos__ + x_pos_offset[tag_type], __y_pos__, FontImage, width, 16, 1) ;
+#else
   display.drawBitmap(__x_pos__, __y_pos__, FontImage, width, 16, 1) ;
+#endif
   __x_pos__ += width ;
+#ifdef USE_EURK_ON_LINUX
+  // nothing todo
+#else
   if (__x_pos__ >= SSD1306_LCDWIDTH) {
     __x_pos__ = 0 ;
     __y_pos__ += 16 ;
@@ -2939,6 +2977,7 @@ static void PutFontImage(int width)
     Serial.println() ;
   }
   Serial.println() ;
+#endif
 }
 
 void EURK_hancode(int kind)
@@ -2952,12 +2991,23 @@ void EURK_setxy(int x, int y)
   __y_pos__ = y ;
 }
 
+#ifdef USE_EURK_ON_LINUX
+#define MARGIN_OFFSET 8
+void EURK_puts(char *s, int tag_type)
+#else
 void EURK_puts(char *s)
+#endif
 {
   uint16_t utf16 ;
   byte c, c2, c3 ;
 
+#ifdef USE_EURK_ON_LINUX
+  int total_length = 0;
+  utf16 = 0;
+  while ((c = *(byte *)s++)) {
+#else
   while (c = *(byte *)s++) {
+#endif
     if (c >= 0x80) { //---------- 한글 ---------
       c2 = *(byte *)s++ ;
       if (__han_code__ == HANCODE_UTF_8) {
@@ -2970,16 +3020,63 @@ void EURK_puts(char *s)
         utf16 = geTcomPhaNindeX(utf16) ;
       }
       MakeHanFont(utf16) ;
+#ifdef USE_EURK_ON_LINUX
+      PutFontImage(16, tag_type) ;
+      total_length += 16; 
+#else
       PutFontImage(16) ;
+#endif
     } else {         //---------- ASCII ---------
       MakeASCIIFont(c) ;
+#ifdef USE_EURK_ON_LINUX
+      PutFontImage(8, tag_type) ;
+      total_length += 8; 
+#else
       PutFontImage(8) ;
+#endif
     }
   }  
+
+#ifdef USE_EURK_ON_LINUX
+  if (total_length > SSD1306_LCDWIDTH) {
+    remaining_length[tag_type] = total_length - SSD1306_LCDWIDTH;
+
+    if (directions[tag_type] == -1) { // left direction
+      if (abs(x_pos_offset[tag_type]) <= remaining_length[tag_type] + MARGIN_OFFSET) {
+        x_pos_offset[tag_type]--;
+      }
+      else {
+        directions[tag_type] = 1; // toggle direction to right side
+      }
+    }
+    else {
+      x_pos_offset[tag_type]++;
+
+      if (x_pos_offset[tag_type] >= MARGIN_OFFSET) {
+        directions[tag_type] = -1; // toggle direction to left side
+      }
+    }
+  }
+#endif
 }
 
+#ifdef USE_EURK_ON_LINUX
+void EURK_putsxy(int x, int y, char *s, int tag_type)
+{
+  EURK_setxy(x, y) ;
+  EURK_puts(s, tag_type) ;
+}
+
+void EURK_reset_scroll_offset(void)
+{
+  memset(remaining_length, 0x0, sizeof(remaining_length));  
+  memset(x_pos_offset, 0x0, sizeof(x_pos_offset));
+  directions[0] = directions[1] = -1;
+}
+#else
 void EURK_putsxy(int x, int y, char *s)
 {
   EURK_setxy(x, y) ;
   EURK_puts(s) ;
-}  
+}
+#endif

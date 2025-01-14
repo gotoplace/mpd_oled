@@ -26,6 +26,9 @@ if LIBMPDCLIENT_LOCAL
    AM_CPPFLAGS += -I$(top_srcdir)/$(LIBMPDCLIENT_TMP_DIR)/include
 endif
 
+AM_CPPFLAGS += -DUSE_EURK_ON_LINUX
+mpd_oled_SOURCES += EURK_Arduino.cpp EURK_Arduino.h
+
 #if LIBUEV_LOCAL
 #   mpd_oled_LDADD += $(top_srcdir)/$(LIBUEV_TMP_DIR)/libuev.a
 #   AM_CPPFLAGS += -I$(top_srcdir)/$(LIBUEV_TMP_DIR)

@@ -71,6 +71,11 @@ void draw_text_scroll(ArduiPi_OLED &display, int x_start, int y_start,
                       int max_len, std::string str, std::vector<double> scroll,
                       double secs = 0.0);
 
+#ifdef USE_EURK_ON_LINUX
+void draw_bitmap_scroll(int x_start, int y_start,
+                      std::string str, int tag_type);
+#endif
+
 bool init_display(ArduiPi_OLED &display, int oled, unsigned char i2c_addr,
                   int i2c_bus, int reset_gpio, int spi_dc_gpio, int spi_cs,
                   bool rotate180 = false);

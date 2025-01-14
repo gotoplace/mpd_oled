@@ -28,6 +28,10 @@
 #include "status.h"
 #include <vector>
 
+#ifdef USE_EURK_ON_LINUX
+extern void EURK_reset_scroll_offset(void);
+#endif
+
 struct spect_graph {
   int gap;                            // size of gap in pixels
   std::vector<unsigned char> heights; // bar heights
@@ -60,6 +64,11 @@ inline void display_info::update_from(const display_info &new_info)
   *this = new_info;
   if (changed)
     text_change.reset();
+
+#ifdef USE_EURK_ON_LINUX
+  if (changed)
+    EURK_reset_scroll_offset();
+#endif
 }
 
 #endif // DISPLAY_INFO_H

@@ -28,6 +28,11 @@
 #include <string>
 #include <vector>
 
+#ifdef USE_EURK_ON_LINUX
+#include "EURK_Arduino.h"
+#define MAX_TAG_LEN 512
+#endif
+
 using std::string;
 using std::vector;
 
@@ -220,6 +225,16 @@ void draw_text_scroll(ArduiPi_OLED &display, int x_start, int y_start,
                        0, pix_offset ? pix_offset : W, str[max_len - 1], WHITE,
                        BLACK, 1);
 }
+
+#ifdef USE_EURK_ON_LINUX
+void draw_bitmap_scroll(int x_start, int y_start,
+                      string str, int tag_type)
+{
+  char temp_str[MAX_TAG_LEN];
+  strcpy(temp_str, str.c_str());
+  EURK_putsxy(x_start, y_start, temp_str, tag_type);
+}
+#endif
 
 static void set_rotation(ArduiPi_OLED &display, bool upside_down)
 {
