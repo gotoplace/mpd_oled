@@ -112,3 +112,11 @@ OLED interface based on ArduiPI_OLED: <https://github.com/hallard/ArduiPi_OLED>
 code).
 
 C library for Broadcom BCM 2835: <https://www.airspayce.com/mikem/bcm2835/>
+
+## Support Korean on MPD OLED
+* Some changes for Korean on MPD OLED were applied by EURK Korean library <https://github.com/sookmook/EURK_Arduino>.
+* Thank you Young-min Ji who is the original author for creating and sharing the invaluable implementations.
+* forked repository for the original EURK Korean library <https://github.com/gotoplace/EURK_Arduino>
+* commmit for ported EURK Korean library on MPD OLED <https://github.com/gotoplace/mpd_oled/commit/4dab22f2823db140142b661903c580250fbb61d5>
+* You need to build the source code with the latest changes and cp mpd_oled binary from /usr/local/bin to /usr/bin .
+![support Korean by EURK Korean library](EURK_korean_library.jpg)
