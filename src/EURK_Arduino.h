@@ -21,6 +21,7 @@
 
 #ifdef USE_EURK_ON_LINUX
 #include "ArduiPi_OLED.h"
+#include <vector>
 #else
 #include <Adafruit_SSD1306.h>
 #endif
@@ -95,8 +96,8 @@ union HAN_UNION {
 void EURK_hancode(int kind) ;
 void EURK_setxy(int x, int y) ;
 #ifdef USE_EURK_ON_LINUX
-void EURK_puts(char *s, int tag_type) ;
-void EURK_putsxy(int x, int y, char *s, int tag_type) ;
+void EURK_puts(char *s, int tag_type, std::vector<double> scroll, double secs) ;
+void EURK_putsxy(int x, int y, char *s, int tag_type, std::vector<double> scroll, double secs) ;
 #else
 void EURK_puts(char *s) ;
 void EURK_putsxy(int x, int y, char *s) ;

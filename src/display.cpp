@@ -228,11 +228,12 @@ void draw_text_scroll(ArduiPi_OLED &display, int x_start, int y_start,
 
 #ifdef USE_EURK_ON_LINUX
 void draw_bitmap_scroll(int x_start, int y_start,
-                      string str, int tag_type)
+                      string str, int tag_type,
+                      std::vector<double> scroll, double secs)
 {
   char temp_str[MAX_TAG_LEN];
   strcpy(temp_str, str.c_str());
-  EURK_putsxy(x_start, y_start, temp_str, tag_type);
+  EURK_putsxy(x_start, y_start, temp_str, tag_type, scroll, secs);
 }
 #endif
 

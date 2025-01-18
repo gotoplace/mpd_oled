@@ -32,9 +32,11 @@ static const byte *HanFontSet = H_in_font_Hangel_844 ;
 static const byte *ASCIIFontSet = H_in_font_ASCII ;
 
 #ifdef USE_EURK_ON_LINUX
-static int remaining_length[2];
-static int x_pos_offset[2];
-static int directions[2];
+#define MAX_TAG_ITEMS 2
+static int remaining_length[MAX_TAG_ITEMS];
+static int x_pos_offset[MAX_TAG_ITEMS];
+static int directions[MAX_TAG_ITEMS];
+static int count_for_shift[MAX_TAG_ITEMS];
 #endif
 
 #ifdef USE_EURK_ON_LINUX
@@ -2993,7 +2995,7 @@ void EURK_setxy(int x, int y)
 
 #ifdef USE_EURK_ON_LINUX
 #define MARGIN_OFFSET 8
-void EURK_puts(char *s, int tag_type)
+void EURK_puts(char *s, int tag_type, std::vector<double> scroll, double secs)
 #else
 void EURK_puts(char *s)
 #endif
@@ -3038,39 +3040,58 @@ void EURK_puts(char *s)
   }  
 
 #ifdef USE_EURK_ON_LINUX
-  if (total_length > SSD1306_LCDWIDTH) {
-    remaining_length[tag_type] = total_length - SSD1306_LCDWIDTH;
+  int pixels_per_sec = int(scroll[0]);
+  int scroll_after_secs = int(scroll[1]);
+  //int unit_for_count = pixels_per_sec / 20 * 10; // 40 ~ 42 times are called in a sec
+  int unit_for_count = pixels_per_sec / 15 * 10; // proper value per a sec
 
-    if (directions[tag_type] == -1) { // left direction
-      if (abs(x_pos_offset[tag_type]) <= remaining_length[tag_type] + MARGIN_OFFSET) {
-        x_pos_offset[tag_type]--;
+  if (unit_for_count < 1) {
+    unit_for_count = 2; // default value
+  }
+
+  if (total_length > SSD1306_LCDWIDTH) {
+    if (secs - scroll_after_secs < 0) {
+      // nothing to do
+    }
+    else if (count_for_shift[tag_type] >= pixels_per_sec) {
+      count_for_shift[tag_type] = 0;
+      remaining_length[tag_type] = total_length - SSD1306_LCDWIDTH;
+
+      if (directions[tag_type] == -1) { // left direction
+        if (abs(x_pos_offset[tag_type]) <= remaining_length[tag_type] + MARGIN_OFFSET) {
+          x_pos_offset[tag_type]--;
+        }
+        else {
+          directions[tag_type] = 1; // toggle direction to right side
+        }
       }
       else {
-        directions[tag_type] = 1; // toggle direction to right side
+        x_pos_offset[tag_type]++;
+
+        if (x_pos_offset[tag_type] >= MARGIN_OFFSET) {
+          directions[tag_type] = -1; // toggle direction to left side
+        }
       }
     }
     else {
-      x_pos_offset[tag_type]++;
-
-      if (x_pos_offset[tag_type] >= MARGIN_OFFSET) {
-        directions[tag_type] = -1; // toggle direction to left side
-      }
+      count_for_shift[tag_type] += unit_for_count;
     }
   }
 #endif
 }
 
 #ifdef USE_EURK_ON_LINUX
-void EURK_putsxy(int x, int y, char *s, int tag_type)
+void EURK_putsxy(int x, int y, char *s, int tag_type, std::vector<double> scroll, double secs)
 {
   EURK_setxy(x, y) ;
-  EURK_puts(s, tag_type) ;
+  EURK_puts(s, tag_type, scroll, secs) ;
 }
 
 void EURK_reset_scroll_offset(void)
 {
   memset(remaining_length, 0x0, sizeof(remaining_length));  
   memset(x_pos_offset, 0x0, sizeof(x_pos_offset));
+  memset(count_for_shift, 0x0, sizeof(count_for_shift));
   directions[0] = directions[1] = -1;
 }
 #else

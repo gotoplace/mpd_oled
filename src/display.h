@@ -73,7 +73,8 @@ void draw_text_scroll(ArduiPi_OLED &display, int x_start, int y_start,
 
 #ifdef USE_EURK_ON_LINUX
 void draw_bitmap_scroll(int x_start, int y_start,
-                      std::string str, int tag_type);
+                      std::string str, int tag_type,
+                      std::vector<double> scroll, double secs = 0.0);
 #endif
 
 bool init_display(ArduiPi_OLED &display, int oled, unsigned char i2c_addr,
