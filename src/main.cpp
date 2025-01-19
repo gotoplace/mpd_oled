@@ -464,30 +464,22 @@ void draw_spect_display(ArduiPi_OLED &display, const display_info &disp_info)
   draw_time(display, 128 - 10 * W + clock_offset, 2 * H, 2,
             disp_info.clock_format);
 
+  vector<double> scroll_origin(disp_info.scroll.begin() + 2,
+                               disp_info.scroll.begin() + 4);
 #ifdef USE_EURK_ON_LINUX
-  vector<double> scroll_origin(disp_info.scroll.begin(),
-                               disp_info.scroll.begin() + 2);
-
   draw_bitmap_scroll(0, 4 * H + 1, disp_info.status.get_origin(), 0,
                      scroll_origin, disp_info.text_change.secs()); // origin
 #else
-  vector<double> scroll_origin(disp_info.scroll.begin() + 2,
-                               disp_info.scroll.begin() + 4);
-
   draw_text_scroll(display, 0, 4 * H + 4, 20, disp_info.status.get_origin(),
                    scroll_origin, disp_info.text_change.secs());
 #endif
 
-#ifdef USE_EURK_ON_LINUX
   vector<double> scroll_title(disp_info.scroll.begin(),
-                              disp_info.scroll.begin() + 4);
-
+                              disp_info.scroll.begin() + 2);
+#ifdef USE_EURK_ON_LINUX
   draw_bitmap_scroll(0, 6 * H - 2, disp_info.status.get_title(), 1,
                      scroll_title, disp_info.text_change.secs()); // title
 #else
-  vector<double> scroll_title(disp_info.scroll.begin(),
-                              disp_info.scroll.begin() + 2);
-
   draw_text_scroll(display, 0, 6 * H, 20, disp_info.status.get_title(),
                    scroll_title, disp_info.text_change.secs());
 #endif
