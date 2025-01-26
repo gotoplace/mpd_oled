@@ -33,6 +33,7 @@ static const byte *ASCIIFontSet = H_in_font_ASCII ;
 
 #ifdef USE_EURK_ON_LINUX
 #define MAX_TAG_ITEMS 2
+#define MAX_PIXELS_PER_SEC 40
 static int remaining_length[MAX_TAG_ITEMS];
 static int x_pos_offset[MAX_TAG_ITEMS];
 static int directions[MAX_TAG_ITEMS];
@@ -3042,18 +3043,17 @@ void EURK_puts(char *s)
 #ifdef USE_EURK_ON_LINUX
   int pixels_per_sec = int(scroll[0]);
   int scroll_after_secs = int(scroll[1]);
-  //int unit_for_count = pixels_per_sec / 20 * 10; // 40 ~ 42 times are called in a sec
-  int unit_for_count = pixels_per_sec / 15 * 10; // proper value per a sec
+  int unit_for_count = pixels_per_sec;
 
   if (unit_for_count < 1) {
-    unit_for_count = 2; // default value
+    unit_for_count = 8; // default value
   }
 
   if (total_length > SSD1306_LCDWIDTH) {
     if (secs - scroll_after_secs < 0) {
       // nothing to do
     }
-    else if (count_for_shift[tag_type] >= pixels_per_sec) {
+    else if (count_for_shift[tag_type] >= MAX_PIXELS_PER_SEC) {
       count_for_shift[tag_type] = 0;
       remaining_length[tag_type] = total_length - SSD1306_LCDWIDTH;
 
